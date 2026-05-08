@@ -44,15 +44,15 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == xChannelRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("NagramX", NekoAboutActivity.this, 1);
+            MessagesController.getInstance(currentAccount).openByUserName("novagramx", NekoAboutActivity.this, 1);
         } else if (position == channelRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("nagram_channel", NekoAboutActivity.this, 1);
+            MessagesController.getInstance(currentAccount).openByUserName("novagramx", NekoAboutActivity.this, 1);
         } else if (position == channelTipsRow) {
-            MessagesController.getInstance(currentAccount).openByUserName("NagramTips", NekoAboutActivity.this, 1);
+            MessagesController.getInstance(currentAccount).openByUserName("novagramx", NekoAboutActivity.this, 1);
         } else if (position == translationRow) {
-            Browser.openUrl(getParentActivity(), "https://crowdin.com/project/NagramX");
+            Browser.openUrl(getParentActivity(), "https://github.com/ferelking242/novagramx");
         } else if (position == sourceCodeRow) {
-            Browser.openUrl(getParentActivity(), "https://github.com/risin42/NagramX");
+            Browser.openUrl(getParentActivity(), "https://github.com/ferelking242/novagramx");
         } else if (position == datacenterStatusRow) {
             presentFragment(new DatacenterActivity(0));
         }
@@ -74,11 +74,11 @@ public class NekoAboutActivity extends BaseNekoSettingsActivity {
             if (holder.getItemViewType() == TYPE_SETTINGS) {
                 TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                 if (position == xChannelRow) {
-                    textCell.setTextAndValue(getString(R.string.XChannel), "@NagramX", true);
+                    textCell.setTextAndValue(getString(R.string.XChannel), "@novagramx", true);
                 } else if (position == channelRow) {
-                    textCell.setTextAndValue(getString(R.string.OfficialChannel), "@nagram_channel", true);
+                    textCell.setTextAndValue(getString(R.string.OfficialChannel), "@novagramx", true);
                 } else if (position == channelTipsRow) {
-                    textCell.setTextAndValue(getString(R.string.TipsChannel), "@" + "NagramTips", true);
+                    textCell.setTextAndValue(getString(R.string.TipsChannel), "@novagramx", true);
                 } else if (position == sourceCodeRow) {
                     textCell.setTextAndValue(getString(R.string.SourceCode), "Github", true);
                 } else if (position == translationRow) {

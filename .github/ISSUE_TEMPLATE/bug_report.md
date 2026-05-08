@@ -1,35 +1,34 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+about: Report something that isn't working
+title: '[Bug] '
+labels: bug
 assignees: ''
 
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
+Steps to reproduce:
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Logcat**
-Settings - click version - "Enable Log", then click "Send Logs" to save the log file, and upload the log file here.
+2. Do '...'
+3. See error
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+What you expected to happen.
+
+**Logs**
+Go to Settings → tap the version number → Enable Log → Send Logs. Attach the log file here.
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+If applicable, add screenshots.
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. MI6]
- - OS: [e.g. Android8.1]
- - Version [e.g. 5.15.0]
+**Device info**
+- Device: [e.g. Pixel 7]
+- Android version: [e.g. 14]
+- NovagramX version: [e.g. 12.6.4]
 
 **Additional context**
-Add any other context about the problem here.
+Anything else relevant.

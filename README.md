@@ -1,72 +1,100 @@
-# Nagram X
-[![Crowdin](https://badges.crowdin.net/NagramX/localized.svg)](https://crowdin.com/project/NagramX)  
-A variant of [Nagram](https://github.com/NextAlone/Nagram) with additional features.
+# NovagramX
+
+A Telegram client for Android, forked from [NagramX](https://github.com/risin42/NagramX).
+
+Built on Nekogram and AyuGram. The main additions are native LLM support, voice transcription, a lockable Ghost Mode, and a broad set of UI and chat tweaks.
+
+---
 
 ## Download
 
-Latest versions are available through:
-* [Telegram Channel](https://t.me/NagramX) (Latest Beta)
-* [GitHub Actions](https://github.com/risin42/NagramX/actions/workflows/staging.yml) (CI Artifacts)
-* [GitHub Releases](https://github.com/risin42/NagramX/releases) (Latest Stable)
+- [GitHub Actions](https://github.com/ferelking242/novagramx/actions/workflows/staging.yml) — CI builds (arm64-v8a, auto-built on every push to `dev`)
+- [GitHub Releases](https://github.com/ferelking242/novagramx/releases) — Stable releases
 
-## Verify APK
+---
 
-Official APKs use the following Android signing certificate:
+## What's different from stock Telegram
 
-* Package name: `nu.gpu.nagram` / `nu.gpu.nagramx` (base version)
-* SHA-256: `0D:51:91:56:E8:0C:91:8C:28:C4:80:BF:D1:3F:31:6A:3B:3B:F7:22:DB:53:2F:AB:74:66:0E:C8:E5:C5:06:A1`
+**Privacy & Ghost Mode**
+- Read receipts (messages + stories), online status, upload progress — each independently toggleable and lockable behind the passcode
+- Deleted and edited message history saved locally (AyuGram backend, SQLite)
+- Local last seen tracking per contact
+- Regex message filters with per-chat exclusions, channel blocking, user filtering
 
-## Compilation Guide
+**AI & Transcription**
+- LLM integration: OpenAI, Gemini, xAI, Groq, DeepSeek, Cerebras, Ollama, OpenRouter, Vercel AI Gateway — or any OpenAI-compatible endpoint
+- Voice transcription via Cloudflare Whisper, Gemini, or OpenAI Whisper
+- LLM-powered translation alongside Google, DeepL, Microsoft, Yandex — with context-aware mode
 
-1. Obtain API credentials (`TELEGRAM_APP_ID` and `TELEGRAM_APP_HASH`) from [Telegram Developer Portal](https://my.telegram.org/auth). Create `local.properties` in the project root with:
+**Forwarding & Messages**
+- Forward without author tag, forward without caption, Repeat as Copy
+- Combine messages when forwarding
+- Double-tap action configurable separately for incoming and outgoing
+- Bookmark system per chat
+- Silent messages by default (optional)
 
-   ```properties
-   TELEGRAM_APP_ID=<your_telegram_app_id>
-   TELEGRAM_APP_HASH=<your_telegram_app_hash>
+**UI**
+- Custom app title, folder name as active title
+- Icon packs (Solar Icons), MD3 and Modern switch/slider styles
+- Monet (Material You) support
+- Pinned reactions configured separately per chat and per channel
+- Configurable context menus — hide the items you never use
+- Back animation style: Classic, Spring, or Predictive Back
+
+**Network**
+- UnifiedPush support — no Firebase / Google services required
+- DNS-over-HTTPS (custom or preset), IPv6
+- Custom Telegram API ID & Hash
+- Upload boost, enhanced file loader
+
+---
+
+## Build locally
+
+1. Get API credentials from [my.telegram.org](https://my.telegram.org/auth).
+
+2. Create `local.properties` in the project root:
+   ```
+   TELEGRAM_APP_ID=your_app_id
+   TELEGRAM_APP_HASH=your_app_hash
+   KEYSTORE_PASS=your_keystore_password
+   ALIAS_NAME=your_alias_name
+   ALIAS_PASS=your_alias_password
    ```
 
-2. For APK signing: Replace `release.keystore` with your keystore and add signing configuration to `local.properties`:
+3. Replace `TMessagesProj/release.keystore` with your own keystore.
 
-   ```properties
-   KEYSTORE_PASS=<your_keystore_password>
-   ALIAS_NAME=<your_alias_name>
-   ALIAS_PASS=<your_alias_password>
+4. Add FCM support (optional): replace `TMessagesProj/google-services.json` with your own.
+
+5. Build:
    ```
-
-3. For FCM support: Replace `TMessagesProj/google-services.json` with your own configuration file.
-
-4. Open the project in Android Studio to start building.
-
-## GitHub Actions Build
-
-1. Replace `TMessagesProj/release.keystore` with your keystore file.
-
-2. Configure `local.properties` with the following:
-
-   ```properties
-   KEYSTORE_PASS=<your_keystore_password>
-   ALIAS_NAME=<your_alias_name>
-   ALIAS_PASS=<your_alias_password>
-   TELEGRAM_APP_ID=<your_telegram_app_id>
-   TELEGRAM_APP_HASH=<your_telegram_app_hash>
+   ./gradlew TMessagesProj:assembleStaging
    ```
+   Or open in Android Studio directly.
 
-   Base64 encode the contents of this file.
+---
 
-3. Configure GitHub Action secrets:
-   - `LOCAL_PROPERTIES`: Base64-encoded content from step 2
-   - `HELPER_BOT_TOKEN`: Telegram bot token from [@Botfather](https://t.me/Botfather) (e.g., `1111:abcd`)
-   - `HELPER_BOT_TARGET`: Primary Telegram chat ID (e.g., `777000`)
-   - `HELPER_BOT_CANARY_TARGET`: Chat ID for test builds and metadata (can match `HELPER_BOT_TARGET`)
+## GitHub Actions
 
-4. Trigger the Release Build workflow.
+Set these repository secrets:
 
-## Acknowledgments
+| Secret | Description |
+|---|---|
+| `LOCAL_PROPERTIES` | Base64-encoded content of `local.properties` (see above) |
+| `HELPER_BOT_TOKEN` | Telegram bot token — for posting builds to a channel (optional) |
+| `HELPER_BOT_TARGET` | Telegram chat ID to post builds to (optional) |
+| `HELPER_BOT_CANARY_TARGET` | Telegram chat ID for canary builds (optional) |
 
-- [AyuGram](https://github.com/AyuGram/AyuGram4A)
+The `dev` branch triggers a staging build on every push. The workflow produces a signed arm64-v8a APK as a GitHub artifact.
+
+---
+
+## Credits
+
+- [NagramX](https://github.com/risin42/NagramX) — direct upstream
+- [AyuGram](https://github.com/AyuGram/AyuGram4A) — Ghost Mode and message history
+- [Nekogram](https://github.com/Nekogram/Nekogram) — base fork
+- [OctoGram](https://github.com/OctoGramApp/OctoGram)
+- [exteraGram](https://github.com/exteraSquad/exteraGram)
 - [Cherrygram](https://github.com/arsLan4k1390/Cherrygram)
 - [Dr4iv3rNope](https://github.com/Dr4iv3rNope/NotSoAndroidAyuGram)
-- [exteraGram](https://github.com/exteraSquad/exteraGram)
-- [Nagram](https://github.com/NextAlone/Nagram)
-- [Nekogram](https://github.com/Nekogram/Nekogram)
-- [OctoGram](https://github.com/OctoGramApp/OctoGram)
