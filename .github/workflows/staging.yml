@@ -31,34 +31,74 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_MAXSIZE: "10G"
       NATIVE_TARGET: "arm64-v8a"
+      NDK_VERSION: "27.2.12479018"
+      BUILD_TOOLS_VERSION: "36.0.0"
+      ANDROID_API: "36"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
+
       - name: Set up Ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           append-timestamp: false
+          max-size: 10G
+
+      - name: Cache Android NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+          key: ndk-${{ env.NDK_VERSION }}
+
+      - name: Cache Android SDK build-tools & platform
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS_VERSION }}
+            ${{ env.ANDROID_HOME }}/platforms/android-${{ env.ANDROID_API }}
+          key: sdk-buildtools-${{ env.BUILD_TOOLS_VERSION }}-platform-${{ env.ANDROID_API }}
+
+      - name: Set up Android SDK Tools
+        if: steps.cache-ndk.outputs.cache-hit != 'true' || steps.cache-sdk.outputs.cache-hit != 'true'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;${{ env.BUILD_TOOLS_VERSION }} ndk;${{ env.NDK_VERSION }} platforms;android-${{ env.ANDROID_API }}"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-disabled: true
-      - name: Set up Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle
-          key: gradle-${{ hashFiles('**/*.gradle') }}
-      - name: Set up Android SDK Tools
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "build-tools;36.0.0 ndk;27.2.12479018 platforms;android-36"
+          cache-disabled: false
+          gradle-home-cache-cleanup: true
+
       - name: Configure Android SDK Path
         run: |
           echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+
+      - name: Modify Gradle JVM Args & enable parallel build
+        run: |
+          MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+          MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
+          echo "Detected memory size: ${MEMORY_GB}GB"
+          sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
+          if [ $MEMORY_GB -ge 12 ]; then
+            echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
+          else
+            echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> gradle.properties
+          fi
+          echo "org.gradle.parallel=true" >> gradle.properties
+          echo "org.gradle.caching=true" >> gradle.properties
+          echo "org.gradle.configuration-cache=true" >> gradle.properties
+          echo "org.gradle.configuration-cache.problems=warn" >> gradle.properties
+          cat gradle.properties
+
       - name: Generate temporary keystore
         run: |
           rm -f TMessagesProj/release.keystore
@@ -75,16 +115,7 @@ jobs:
           echo "KEYSTORE_PASS=novagramx123" >> $GITHUB_ENV
           echo "ALIAS_NAME=novagramx" >> $GITHUB_ENV
           echo "ALIAS_PASS=novagramx123" >> $GITHUB_ENV
-      - name: Modify Gradle JVM Args
-        run: |
-          MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-          MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
-          echo "Detected memory size: ${MEMORY_GB}GB"
-          if [ $MEMORY_GB -ge 12 ]; then
-            sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
-            echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
-          fi
-          cat gradle.properties
+
       - name: Staging Build
         id: staging_build_step
         env:
@@ -92,11 +123,12 @@ jobs:
         run: |
           export BUILD_TIMESTAMP=$(date +%s)
           echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
-          ./gradlew TMessagesProj:assembleStaging
+          ./gradlew TMessagesProj:assembleStaging --build-cache --parallel
 
           APK=$(find TMessagesProj/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           echo "APK=$APK" >> $GITHUB_ENV
+
       - uses: actions/upload-artifact@v4
         with:
           name: Staging
