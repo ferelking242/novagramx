@@ -794,6 +794,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         moreButtonView.setIcon(R.drawable.ic_ab_other);
         moreButtonView.addSubItem(0, R.drawable.msg_policy_solar, getString(R.string.Proxy));
         moreButtonView.addSubItem(1, R.drawable.msg_qrcode_solar, getString(R.string.ImportLogin));
+        moreButtonView.addSubItem(5, R.drawable.msg_qrcode_mini_solar, getString(R.string.BotLogin));
         if (BuildVars.SUPPORTS_PASSKEYS) moreButtonView.addSubItem(4, R.drawable.menu_passkey_add, getString(R.string.PasskeyLogin));
         moreButtonView.addSubItem(2, R.drawable.msg_permissions_solar, getString(R.string.CustomApi)).setContentDescription(getString(R.string.CustomApi));
         moreButtonView.addSubItem(3, R.drawable.msg_retry_solar, getString(R.string.TestBackend));
@@ -818,6 +819,8 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 if (phoneView != null) {
                     phoneView.requestPasskey(true, true);
                 }
+            } else if (id == 5) {
+                showBotLoginDialog();
             }
         });
         moreButtonView.setSubMenuOpenSide(1);
@@ -2072,6 +2075,13 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
             setOrientation(VERTICAL);
             setGravity(Gravity.CENTER);
+
+            if (activityMode == MODE_LOGIN || activityMode == MODE_ADD_ACCOUNT) {
+                ImageView novagramLogo = new ImageView(context);
+                novagramLogo.setImageResource(R.mipmap.ic_launcher_nagram_blue);
+                novagramLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                addView(novagramLogo, LayoutHelper.createLinear(76, 76, Gravity.CENTER_HORIZONTAL, 0, 20, 0, 4));
+            }
 
             titleView = new TextView(context);
             titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
@@ -8487,7 +8497,52 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
             qrView = new QrView(context);
             qrView.setData(null);
-            addView(qrView, LayoutHelper.createLinear(280, 280, Gravity.CENTER_HORIZONTAL, 30, 30,30, 30));
+            addView(qrView, LayoutHelper.createLinear(280, 280, Gravity.CENTER_HORIZONTAL, 30, 30, 30, 16));
+
+            TextView saveQrButton = new TextView(context);
+            saveQrButton.setText(getString(R.string.SaveQR));
+            saveQrButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+            saveQrButton.setTypeface(AndroidUtilities.bold());
+            saveQrButton.setGravity(Gravity.CENTER);
+            saveQrButton.setPadding(dp(34), 0, dp(34), 0);
+            saveQrButton.setOnClickListener(v -> saveQrCode());
+            addView(saveQrButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, Gravity.CENTER_HORIZONTAL, 16, 0, 16, 16));
+        }
+
+        private void saveQrCode() {
+            try {
+                int size = qrView.getWidth();
+                if (size <= 0) size = dp(280);
+                android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+                android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+                canvas.drawColor(0xFFFFFFFF);
+                qrView.draw(canvas);
+                String fname = "novagramx_qr_" + System.currentTimeMillis() + ".png";
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    android.content.ContentValues values = new android.content.ContentValues();
+                    values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, fname);
+                    values.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png");
+                    values.put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/NovagramX");
+                    android.net.Uri uri = getParentActivity().getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (uri != null) {
+                        try (java.io.OutputStream out = getParentActivity().getContentResolver().openOutputStream(uri)) {
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+                        }
+                    }
+                } else {
+                    java.io.File dir = new java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_PICTURES), "NovagramX");
+                    dir.mkdirs();
+                    java.io.File file = new java.io.File(dir, fname);
+                    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos);
+                    }
+                    android.media.MediaScannerConnection.scanFile(getContext(), new String[]{file.getAbsolutePath()}, null, null);
+                }
+                Toast.makeText(getContext(), getString(R.string.SaveQRSuccess), Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                FileLog.e(e);
+                Toast.makeText(getContext(), getString(R.string.SaveQRError), Toast.LENGTH_SHORT).show();
+            }
         }
 
         @Override
@@ -8644,6 +8699,69 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
             return AndroidUtilities.showKeyboard(editText);
         }
         return true;
+    }
+
+    private void showBotLoginDialog() {
+        Context ctx = getParentActivity();
+        if (ctx == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setTitle(getString(R.string.BotLogin));
+        builder.setMessage(getString(R.string.BotLoginHint));
+        android.widget.EditText input = new android.widget.EditText(ctx);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setHint("123456789:AABBCCxxxxx");
+        input.setSingleLine(true);
+        input.setPadding(dp(16), dp(12), dp(16), dp(12));
+        builder.setView(input);
+        builder.setPositiveButton(getString(R.string.OK), (dialog, which) -> {
+            String token = input.getText().toString().trim();
+            if (TextUtils.isEmpty(token) || !token.contains(":")) return;
+            importBotAuthorization(token);
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
+    private void importBotAuthorization(String token) {
+        needShowProgress(0);
+        TL_NovagramImportBotAuth req = new TL_NovagramImportBotAuth();
+        req.api_id = NekoXConfig.currentAppId();
+        req.api_hash = NekoXConfig.currentAppHash();
+        req.bot_auth_token = token;
+        ConnectionsManager.getInstance(currentAccount).cleanup(false);
+        getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            needHideProgress(false);
+            if (error == null && response instanceof TLRPC.TL_auth_authorization) {
+                onAuthSuccess((TLRPC.TL_auth_authorization) response);
+            } else {
+                String msg = error != null ? error.text : getString(R.string.ErrorOccurred);
+                needShowAlert(getString(R.string.BotLogin), msg);
+            }
+        }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin | ConnectionsManager.RequestFlagTryDifferentDc | ConnectionsManager.RequestFlagEnableUnauthorized);
+    }
+
+    private static class TL_NovagramImportBotAuth extends org.telegram.tgnet.TLObject {
+        public static final int constructor = 0x67a3ff2c;
+        public int flags = 0;
+        public int api_id;
+        public String api_hash;
+        public String bot_auth_token;
+
+        @Override
+        public org.telegram.tgnet.TLObject deserializeResponse(org.telegram.tgnet.AbstractSerializedData stream, int con, boolean exception) {
+            TLRPC.TL_auth_authorization res = new TLRPC.TL_auth_authorization();
+            res.readParams(stream, exception);
+            return res;
+        }
+
+        @Override
+        public void serializeToStream(org.telegram.tgnet.AbstractSerializedData stream) {
+            stream.writeInt32(constructor);
+            stream.writeInt32(flags);
+            stream.writeInt32(api_id);
+            stream.writeString(api_hash);
+            stream.writeString(bot_auth_token);
+        }
     }
 
     public LoginActivity setIntroView(View intro, TextView startButton) {

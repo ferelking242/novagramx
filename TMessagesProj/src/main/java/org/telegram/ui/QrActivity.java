@@ -791,7 +791,7 @@ public class QrActivity extends BaseFragment {
 
     public static void openCameraScanActivity(BaseFragment fragment) {
         final int currentAccount = fragment.getCurrentAccount();
-        CameraScanActivity.showAsSheet(fragment, false, CameraScanActivity.TYPE_QR, new CameraScanActivity.CameraScanActivityDelegate() {
+        CameraScanActivity.showAsSheet(fragment, true, CameraScanActivity.TYPE_QR, new CameraScanActivity.CameraScanActivityDelegate() {
             @Override
             public void didFindQr(String text) {
                 final String username = Browser.extractUsername(text);

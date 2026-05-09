@@ -1118,7 +1118,7 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
     }
 
     private void openCameraScanActivity() {
-        CameraScanActivity.showAsSheet(SessionsActivity.this, false, CameraScanActivity.TYPE_QR_LOGIN, new CameraScanActivity.CameraScanActivityDelegate() {
+        CameraScanActivity.showAsSheet(SessionsActivity.this, true, CameraScanActivity.TYPE_QR_LOGIN, new CameraScanActivity.CameraScanActivityDelegate() {
 
             private TLObject response = null;
             private TLRPC.TL_error error = null;

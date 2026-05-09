@@ -346,4 +346,9 @@
     <string name="TabletModeOn">On</string>
     <string name="TabletModeOff">Off</string>
     <string name="HideDialogsSearchField">Hide Search Box</string>
+    <string name="BotLogin">Bot Login</string>
+    <string name="BotLoginHint">Enter your bot token from @BotFather.\nFormat: 123456789:AABBCCxxxxx</string>
+    <string name="SaveQR">Save QR Code</string>
+    <string name="SaveQRSuccess">QR code saved to Pictures/NovagramX</string>
+    <string name="SaveQRError">Failed to save QR code</string>
 </resources>
