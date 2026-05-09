@@ -794,7 +794,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         moreButtonView.setIcon(R.drawable.ic_ab_other);
         moreButtonView.addSubItem(0, R.drawable.msg_policy_solar, getString(R.string.Proxy));
         moreButtonView.addSubItem(1, R.drawable.msg_qrcode_solar, getString(R.string.ImportLogin));
-        moreButtonView.addSubItem(5, R.drawable.msg_qrcode_mini_solar, getString(R.string.BotLogin));
+        moreButtonView.addSubItem(5, R.drawable.msg_bots_solar, getString(R.string.BotLogin));
         if (BuildVars.SUPPORTS_PASSKEYS) moreButtonView.addSubItem(4, R.drawable.menu_passkey_add, getString(R.string.PasskeyLogin));
         moreButtonView.addSubItem(2, R.drawable.msg_permissions_solar, getString(R.string.CustomApi)).setContentDescription(getString(R.string.CustomApi));
         moreButtonView.addSubItem(3, R.drawable.msg_retry_solar, getString(R.string.TestBackend));
@@ -2076,7 +2076,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
             setOrientation(VERTICAL);
             setGravity(Gravity.CENTER);
 
-            if (activityMode == MODE_LOGIN || activityMode == MODE_ADD_ACCOUNT) {
+            if (activityMode == MODE_LOGIN) {
                 ImageView novagramLogo = new ImageView(context);
                 novagramLogo.setImageResource(R.mipmap.ic_launcher_nagram_blue);
                 novagramLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -8748,14 +8748,14 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         public String bot_auth_token;
 
         @Override
-        public org.telegram.tgnet.TLObject deserializeResponse(org.telegram.tgnet.AbstractSerializedData stream, int con, boolean exception) {
+        public org.telegram.tgnet.TLObject deserializeResponse(org.telegram.tgnet.InputSerializedData stream, int con, boolean exception) {
             TLRPC.TL_auth_authorization res = new TLRPC.TL_auth_authorization();
             res.readParams(stream, exception);
             return res;
         }
 
         @Override
-        public void serializeToStream(org.telegram.tgnet.AbstractSerializedData stream) {
+        public void serializeToStream(org.telegram.tgnet.OutputSerializedData stream) {
             stream.writeInt32(constructor);
             stream.writeInt32(flags);
             stream.writeInt32(api_id);
